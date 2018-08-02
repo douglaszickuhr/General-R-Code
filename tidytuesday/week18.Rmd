@@ -1,0 +1,72 @@
+---
+title: "Week18"
+author: "Douglas Zickuhr"
+date: "2/8/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Reading the spreadsheet into R
+```{r reading excel spreadsheet}
+animals <- readxl::read_xlsx(path = "tidytuesday/data/week18_dallas_animals.xlsx",
+                             sheet = "simple")
+```
+
+
+### Analysing the intake of Dogs and Cats during the year.
+Apparently there is a sad pattern of abbandoned animals during the summer
+```{r animals intake plot echo=FALSE}
+animals %>%
+  filter(animal_type %in% c("CAT","DOG")) %>%
+  filter(intake_type %in% c("STRAY","OWNER SURRENDER")) %>%
+  mutate(intake_type = factor(intake_type),
+         animal_type = factor(animal_type),
+         intake_type = fct_recode(intake_type, "Stray" = "STRAY",
+                                  "Owner Surrender" = "OWNER SURRENDER"),
+         animal_type = fct_recode(animal_type, "Dog" = "DOG",
+                                  "Cat" = "CAT")) %>%
+  group_by(intake_type,animal_type,intake_date) %>%
+  summarise(number = n()) %>%
+  ggplot(aes(x=intake_date,y=number,group=animal_type,colour=animal_type)) + 
+  geom_line(alpha = 0.2) + 
+  geom_smooth(method = "loess") + 
+  facet_wrap(~intake_type, 
+             scales = "free_y", 
+             ncol = 1) + 
+  theme_minimal() + 
+  scale_colour_brewer(palette = "Set1") + 
+  labs(title = "Abbandoned Animals Intake by Intake Date",
+       x = "Intake Date",
+       y = "Number of Animals",
+       colour = "Animal Type")
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+animals %>%
+  filter(animal_type %in% c("CAT","DOG")) %>%
+  filter(intake_type %in% c("STRAY","OWNER SURRENDER")) %>%
+  mutate(animal_type = factor(str_to_title(animal_type)),
+         outcome_type = factor(str_to_title(outcome_type))) %>%
+  mutate(outcome_type = fct_lump(outcome_type, n = 5),
+         month = lubridate::month(intake_date,label = TRUE)) %>%
+  group_by(month,outcome_type,animal_type) %>%
+  summarise(total = n()) %>%
+  ggplot() +
+  geom_area(aes(x=month, y=total,group = outcome_type, fill = outcome_type)) + 
+  facet_wrap(~animal_type, ncol = 1, scales = "free_y") + 
+  theme_minimal() + 
+  scale_fill_brewer(palette = "Set1")+ 
+  labs(title = "Abbandoned Animals Outcome by Month",
+       x = "Month",
+       y = "Number of Animals",
+       colour = "Outcome")
+  
+```
+
