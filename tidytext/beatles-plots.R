@@ -17,6 +17,9 @@ lyrics <- lyrics %>%
   mutate(album_title = str_to_title(album_title)) %>%
   mutate(album_title = fct_relevel(album_title, !!!x))
 
+lyrics_no_sw <- lyrics %>%
+  anti_join(stop_words)
+
 
 lyrics %>%
   anti_join(stop_words) %>%
@@ -38,23 +41,30 @@ lyrics %>%
   labs(x= "Word",
        y = "Count")
 
-lyrics %>%
-  anti_join(stop_words) %>%
-  count(album_title,word,sort = TRUE) %>%
+ordered_lyrics <- lyrics_no_sw %>%
+  count(album_title,word) %>%
   group_by(album_title) %>%
-  top_n(10) %>%
+  top_n(10,n) %>%
   ungroup() %>%
   arrange(album_title, desc(n)) %>%
-  ggplot() +
-  geom_col(aes(x=word,y=n)) + 
+  mutate(order = row_number())
+
+ggplot(ordered_lyrics,
+       aes(desc(order),n,fill=album_title)) + 
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  facet_wrap(~album_title, scales = "free") +
+  theme_bw() +
+  scale_x_continuous(
+    breaks = desc(ordered_lyrics$order),
+    labels = ordered_lyrics$word,
+    expand = c(0,0)
+  ) +
+  coord_flip() + 
   scale_fill_viridis_d(direction = -1,
                        option = "C") + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
-  facet_wrap(~album_title, scales = "free")
-  #coord_flip() + 
-  #labs(x= "Word",
-  #     y = "Count")
-
+  labs(title = "Word Frequency by Album",
+       x = "Word",
+       y = "Frequency")
 
 
 
@@ -63,8 +73,6 @@ top_words <- lyrics %>%
   anti_join(stop_words) %>%
   count(album_title,word,sort = TRUE) %>%
   arrange(album_title,desc(n))
-
-top_words
 
 top_words %>%
   group_by(album_title) %>%
