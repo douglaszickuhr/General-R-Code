@@ -43,14 +43,17 @@ lyrics %>%
   count(album_title,word,sort = TRUE) %>%
   group_by(album_title) %>%
   top_n(10) %>%
+  ungroup() %>%
+  arrange(album_title, desc(n)) %>%
   ggplot() +
-  geom_col(aes(x=reorder(word,n),y=n)) + 
+  geom_col(aes(x=word,y=n)) + 
   scale_fill_viridis_d(direction = -1,
-                       option = "C") +
-  facet_wrap(~album_title, scales = "free") +
-  coord_flip() + 
-  labs(x= "Word",
-       y = "Count")
+                       option = "C") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  facet_wrap(~album_title, scales = "free")
+  #coord_flip() + 
+  #labs(x= "Word",
+  #     y = "Count")
 
 
 
