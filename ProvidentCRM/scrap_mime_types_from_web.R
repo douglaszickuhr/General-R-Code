@@ -1,5 +1,6 @@
 library(rvest)
 library(tidyverse)
+library(readxl)
 library(DBI)
 library(RMySQL)
 

@@ -19,7 +19,11 @@ album_lyrics <- search_parameters %>%
 
 lyrics <- album_lyrics %>%
   rename(album_title = albums) %>%
-  unnest(tracks) %>%
-  unnest_tokens(output = word, input = lyric)
+  unnest(tracks)
 
 write_csv(lyrics,"tidytext/data/beatles_lyrics.csv")
+
+tidy_lyrics <- lyrics %>%
+  unnest_tokens(output = word, input = lyric)
+
+write_csv(tidy_lyrics,"tidytext/data/beatles_tidy_lyrics.csv")
