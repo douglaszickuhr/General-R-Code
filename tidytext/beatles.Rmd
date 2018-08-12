@@ -14,6 +14,7 @@ library(scales)
 library(knitr)
 library(ggraph)
 library(igraph)
+library(googleLanguageR)
 ```
 
 
@@ -252,4 +253,44 @@ lyrics_ngram %>%
   
 ```
 
+
+
+
+```{r google nlp, echo=FALSE}
+lyrics_untidy %>% 
+  group_by(album_title,track_title) %>%
+  mutate(lyrics = paste0(lyric,collapse = "\n")) %>%
+  select(album_title,track_title,lyrics) %>%
+  ungroup() %>%
+  distinct() -> lyrics_sentence
+
+gl_auth("keys/credential.json")
+
+lyrics_sentiment_analysis <- map(lyrics_sentence$lyrics, gl_nlp, 
+         nlp_type = "analyzeSentiment", 
+         type = "PLAIN_TEXT", 
+         language = "en") %>%
+  map_df(6) %>%
+  bind_cols(lyrics_sentence)
+```
+
+
+```{r}
+lyrics_sentiment_analysis %>%
+  mutate(album_title = str_to_title(album_title)) %>%
+  mutate(album_title = fct_relevel(album_title, !!!album_names)) %>%
+  mutate(final_score = score*magnitude,
+         final_score = scale(final_score,center = FALSE)) %>%
+  ggplot(aes(x=fct_rev(album_title),y=final_score,fill = (final_score) > 0)) + 
+  geom_bar(stat="identity",
+           show.legend = FALSE) + 
+  coord_flip() +
+  scale_fill_viridis_d(direction = 1,
+                        option = "D") + 
+  theme_bw() + 
+  labs(title = "Beatles's Sentiment Score by Album - Google NLP",
+       x = "Album",
+       y = "Sentiment Score")
+
+```
 
