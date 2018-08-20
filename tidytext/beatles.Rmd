@@ -264,24 +264,44 @@ lyrics_untidy %>%
   ungroup() %>%
   distinct() -> lyrics_sentence
 
-gl_auth("keys/credential.json")
-
-lyrics_sentiment_analysis <- map(lyrics_sentence$lyrics, gl_nlp, 
-         nlp_type = "analyzeSentiment", 
-         type = "PLAIN_TEXT", 
-         language = "en") %>%
-  map_df(6) %>%
-  bind_cols(lyrics_sentence)
+# gl_auth("keys/credential.json")
+# 
+# lyrics_sentiment_analysis <- map(lyrics_sentence$lyrics, gl_nlp, 
+#          nlp_type = "analyzeSentiment", 
+#          type = "PLAIN_TEXT", 
+#          language = "en") %>%
+#   map_df(6) %>%
+#   bind_cols(lyrics_sentence) %>% 
+#   bind_cols(lyrics_untidy %>%
+#               group_by(album_title,track_title) %>%
+#               summarise() %>%
+#               select(track_n)
+#     )
+#   write_csv(path = "data/beatles_lyrics_google2.csv")
+lyrics_sentiment_analysis <- read_csv("data/beatles_lyrics_google2.csv")
 ```
+
+
+Let's check the songs which have strong sentiment on it. I will consider magnitude over 2. 
+```{r}
+lyrics_sentiment_analysis %>%
+  bind_cols(lyrics_untidy %>%
+              arrange(track_n) %>%
+              group_by(album_title,track_n) %>%
+              summarise() %>%
+              ungroup() %>%
+              select(track_n)) %>%
+  filter(magnitude > 2) %>%
+  arrange(score)
+```
+
 
 
 ```{r}
 lyrics_sentiment_analysis %>%
   mutate(album_title = str_to_title(album_title)) %>%
   mutate(album_title = fct_relevel(album_title, !!!album_names)) %>%
-  mutate(final_score = score*magnitude,
-         final_score = scale(final_score,center = FALSE)) %>%
-  ggplot(aes(x=fct_rev(album_title),y=final_score,fill = (final_score) > 0)) + 
+  ggplot(aes(x=fct_rev(album_title),y=score,fill = score > 0)) + 
   geom_bar(stat="identity",
            show.legend = FALSE) + 
   coord_flip() +
@@ -294,3 +314,39 @@ lyrics_sentiment_analysis %>%
 
 ```
 
+
+
+```{r}
+lyrics_sentiment_analysis %>%
+  mutate(album_title = str_to_title(album_title)) %>%
+  mutate(album_title = fct_relevel(album_title, !!!album_names)) %>%
+  mutate(final_score = score*magnitude,
+         final_score = scale(final_score,center = FALSE)) %>%
+  group_by(album_title) %>%
+  summarise(final_score = sum(final_score)) %>%
+  ungroup() %>%
+  ggplot(aes(x=album_title,
+             y=final_score,
+             fill=final_score)) + 
+  geom_bar(stat="identity") +
+  scale_fill_viridis_c(direction = 1,
+                        option = "D") + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90,
+                                   hjust = 1)) +
+  scale_y_continuous(
+    breaks = (-5:12)
+  ) + 
+  labs(title = "Beatles's Overall Sentiment Score by Album - Google NLP",
+       x = "Album",
+       y = "Overall Sentiment Score",
+       fill = "Album Score")
+```
+
+
+
+
+
+
+
+Why Help and Rubber Soul have so low score? Are those albums's lyrics negative?
