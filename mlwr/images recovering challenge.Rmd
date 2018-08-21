@@ -1,0 +1,178 @@
+---
+title: "Image Recovering"
+author: "Douglas Zickuhr"
+date: "20/8/2018"
+output: html_document
+---
+
+# Loading libraries
+```{r libraries}
+library(jpeg)
+library(tidyverse)
+library(knitr)
+library(janitor)
+library(corrgram)
+library(rpart)
+```
+
+# Downloading images
+```{r download images}
+img_url <- c("http://curso-r.com/img/blog/desafio-recuperacao-img/purple_wave.jpg",
+           "http://curso-r.com/img/blog/desafio-recuperacao-img/xadrez_colorido.jpg")
+img_name <- basename(img_url)
+
+walk2(img_url,img_name,function(x,y){
+  download.file(url = x,
+                destfile = y)
+})
+```
+
+# Reading images using JPEG package into a list
+```{r reading images}
+images <- map(img_name,readJPEG) %>%
+  set_names(janitor::clean_names(img_name))
+```
+
+
+# Checking images dimension
+```{r checking dimensions}
+map(images,dim)
+```
+
+# Converting the jpeg to dataframes
+```{r convert jpeg to dataframes}
+# Function to generate dataframe from images
+generate_df_from_jpeg <- function(img){
+  data.frame(
+    x = rep(1:dim(img)[2], each = dim(img)[1]),
+    y = rep(dim(img)[1]:1, dim(img)[2]),
+    r = as.vector(img[,,1]),
+    g = as.vector(img[,,2]),
+    b = as.vector(img[,,3])
+  ) %>% 
+    mutate(cor = rgb(r,g,b),
+           id = row_number())
+}
+
+images_df <- map(images, generate_df_from_jpeg)
+```
+
+# Split the dataset into train and test
+```{r split dataset into train and test}
+# Function to split the dataset into train and test
+split_train_test <- function(img) {
+  ret <- list()
+  
+  ret$test <- img %>%
+    sample_frac(2/5) %>%
+    mutate(b_backup = b,
+           b = 0,
+           cor = rgb(r, g, b))
+  
+  ret$train <- img %>% 
+    filter(!id%in%ret[1]$id)
+  
+  ret
+}
+
+images_train_test_df <- map(images_df,split_train_test)
+
+```
+
+# Generating a corrgram based on the JPEG images
+```{r corrgram}
+walk(images_df, function(x) {corrgram::corrgram(x = x)})
+
+```
+
+The first JPEG, purple_wave.jpeg has a very high correlation between the colours and the axis x-y, what suggests a linear relationship. Otherwise, the second JPEG, xadrez_colorido.jpg doesn't have that relatioship.
+
+Something to worry about is the multicolinearity on the linear regression, as long as it seems that the independent values are highly correlated.
+
+# Generating the models with the formula b ~ x + y + r + g values.
+```{r modelling}
+images_lm <- map(images_train_test_df, ~ lm(formula = b ~ x + y + r + g, data = .$train))
+images_cart <- map(images_train_test_df, ~ rpart(formula = b ~ x + y + r + g, data = .$train))
+```
+
+
+# Predicting values based on the models
+```{r predictions}
+# Function to calculate the prediction
+predict_images <- function(x,y){
+  predict(x,y$test)
+}
+
+images_lm_predictions <- map2(images_lm,images_train_test_df, predict_images)
+images_cart_predictions <- map2(images_cart, images_train_test_df, predict_images)
+```
+
+Evaluate the linear regression
+```{r evaluating linear regression}
+map(images_lm,summary)
+```
+
+The result of the linear regression for purple_wave.jpg seems very good. We got a Adjusted R-squared of 0.9994. On the other hand, for xadrez_colorido.jpg the result is not so good.
+
+
+```{r evaluate regression tree}
+# Function to calcualte the Mean Absolute Error
+MAE <- function(actual, predicted){
+  mean(abs(actual$test$b - predicted))
+}
+
+map2(images_train_test_df,images_lm_predictions,MAE)
+
+```
+Considering that the values are from 0 to 1, the regression tree has a mean difference of 0.17 for xadrez_colorido.jpg, which is way better than the result for purple_wave.jpg  
+
+
+# Assigning the predicted values to test dataframe.
+```{r}
+images_train_test_df$purple_wave.jpg$test$b_lm <- images_lm_predictions$purple_wave.jpg
+images_train_test_df$purple_wave.jpg$test$b_cart <- images_cart_predictions$purple_wave.jpg
+images_train_test_df$xadrez_colorido.jpg$test$b_lm <- images_lm_predictions$xadrez_colorido.jpg
+images_train_test_df$xadrez_colorido.jpg$test$b_cart <- images_cart_predictions$xadrez_colorido.jpg
+
+
+# Function to generate the plot using tidyeval
+generate_plot <- function(x, var_name){
+  var_name <- enquo(var_name)
+  
+  # The linear model has predicted some values smaller than 0, which is not accepted by rgb function.
+  df <- x$test %>%
+  mutate(!!var_name := if_else(!!var_name < 0, 0 , !!var_name),
+           cor = rgb(r,g,!!var_name))
+  
+  # Generating the plot
+  ggplot(df) + 
+    geom_point(aes(x,y), 
+               colour = df$cor)
+  
+}
+
+```
+
+
+
+#Finally, let's visualise the recovered images.
+
+## Linear Regression
+```{r plotting images recovered with Linear models}
+map(images_train_test_df,generate_plot,var_name = b_lm)
+```
+Using the predicted values by the Linear Regression, the purple wave was satisfactorily recovered. 
+Whilst for "xadrez colorido", the linear model seems to have failed in predict the colour correctly. It's not possible to see any tone of blue on the image.
+
+## Regression Trees - CART
+```{r plotting images recovered with regression tree}
+map(images_train_test_df,generate_plot,var_name = b_cart)
+
+```
+
+Regarding "purple wave", the values predicted by the CART are also visually good on the prediction but the colours are not smooth as the results from the Linear Regression. 
+On the other hand, the CART model predicted satisfactorily the colour tones for "xadrez colorigo".
+
+
+# Wrapping up
+Due to non linear relationship between independent and dependent variables, the image "xadrez colorido" has a better prediction result with the regression tree model.
