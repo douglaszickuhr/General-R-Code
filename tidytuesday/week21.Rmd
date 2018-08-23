@@ -1,0 +1,47 @@
+---
+title: "TidyTuesday Week 20"
+author: "Douglas Zickuhr"
+date: "22/8/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(knitr)
+library(rvest)
+library(janitor)
+```
+
+```{r}
+fires <- read_csv("https://github.com/rfordatascience/tidytuesday/raw/master/data/2018-08-21/week21_calfire_frap.csv")
+```
+
+```{r}
+glimpse(fires)
+```
+
+```{r}
+p <- fires %>%
+  mutate(month = lubridate::month(alarm_date, label = TRUE)) %>%
+  filter(!is.na(month)) %>%
+  group_by(year_,month) %>%
+  summarise(avg_area = mean(gis_acres, na.rm = TRUE),
+            no_of_fires = n()) %>%
+  ggplot() + 
+  geom_point(aes(x=no_of_fires,y=avg_area,colour=month)) + 
+  geom_smooth(aes(x=no_of_fires,y=avg_area),
+              se = FALSE) + 
+  scale_colour_viridis_d(option = "A") +
+  scale_x_continuous(limits=c(0,100)) + 
+  scale_y_continuous(limits=c(0,10000)) + 
+  labs(title = "Average Area vs Number of Fires by Month",
+       x = "Number of Fires reported",
+       y = "Average Acres",
+       colour = "Month")
+
+ggsave(filename = "week21.png",
+       plot = p)
+  
+  
+```
+
