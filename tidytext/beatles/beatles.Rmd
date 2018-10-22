@@ -5,6 +5,12 @@ date: "11/8/2018"
 output: html_document
 ---
 
+# Number 9 - A Beatles's text mining analysis
+
+The Beatles is probably the most well known rock band from all times. They've been recognised by their inventive music and the revolution they've caused on human history. Well, I don't even think that they need further introduction. 
+![](img/beatles68.jpg)
+
+
 ```{r loading libraries}
 library(tidyverse)
 library(tidytext)
@@ -16,6 +22,7 @@ library(ggraph)
 library(igraph)
 library(googleLanguageR)
 ```
+
 
 
 ```{r reading dataset}
@@ -54,8 +61,7 @@ lyrics_no_sw %>%
   with(wordcloud(words = word, 
                  freq = n,
                  max.words = 100,
-                 random.order = FALSE,
-                 colors = n
+                 random.order = FALSE
                  ))
 ```
 

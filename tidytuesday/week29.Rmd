@@ -1,0 +1,79 @@
+---
+title: "week29"
+author: "Douglas Zickuhr"
+date: "18/10/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(scales)
+library(reshape2)
+theme_set(theme_light())
+```
+
+```{r}
+major_salary <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-16/recent-grads.csv")
+```
+
+# Removing majors where the # of sample is less than 100
+```{r}
+major_salary_sampled <- major_salary %>%
+  filter(Sample_size >= 100)  
+```
+
+
+# What are the major with the highest unemployement rate?
+```{r}
+major_salary_sampled %>%
+  arrange(desc(Unemployment_rate)) %>%
+  mutate(Major = str_to_title(Major),
+         Major = fct_reorder(Major,Unemployment_rate)) %>%
+  head(20) %>%
+  ggplot() + 
+  geom_col(aes(x=Major,y=Unemployment_rate),fill="black") + 
+  scale_y_continuous(labels = scales::percent) +
+  coord_flip() + 
+  labs(title = "What are majors with the highest unmployment rate?",
+       subtitle = "Top 20 Majors",
+       x = "Major",
+       y = "Unemployement Rate")
+```
+
+# What's the participation of women by Major Category?
+```{r}
+major_salary %>%
+  group_by(Major_category) %>%
+  summarise(Men = sum(Men,na.rm = TRUE),
+            Women = sum(Women,na.rm = TRUE),
+            GrandTotal = Men + Women,
+            Men = Men/GrandTotal,
+            Women = Women/GrandTotal) %>%
+  select(-GrandTotal) %>%
+  mutate(Major_category = fct_reorder(Major_category,Women)) %>%
+  melt(id.vars = c("Major_category"),
+       variable.name = "Genre",
+       value.name = "Rate") %>%
+  ggplot(aes(x=Major_category,y=Rate,group=Genre,fill=Genre)) +
+  geom_bar(stat = "identity",
+           position = "stack") + 
+  coord_flip() + 
+  labs(title = "Genres Participation",
+       subtitle = "By Major Category",
+       x = "Major Category",
+       y = "Genre Rate") + 
+  scale_y_continuous(labels = scales::percent)
+  
+```
+
+
+```{r}
+
+```
+

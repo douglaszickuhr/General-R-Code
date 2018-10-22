@@ -1,0 +1,30 @@
+---
+title: "Olympic Athletes"
+author: "Douglas Zickuhr"
+date: "14/8/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(maps)
+library(mapdata)
+library(ggmap)
+```
+
+
+```{r}
+
+fastfood <- read_csv("kaggle/fastfood/FastFoodRestaurants.csv")
+```
+
+
+
+```{r}
+
+```
+

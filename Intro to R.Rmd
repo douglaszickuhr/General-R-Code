@@ -1,0 +1,164 @@
+---
+title: "Introduction to R"
+author: "Douglas Zickuhr"
+date: "11/09/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Atomic Vectors
+* boolean
+* integer
+* double
+* character
+* complex and raw you won't see very often
+
+```{r atomic vectors}
+# Every variable is a vector in R, even when it just a single number
+num_vec <- 1
+class(num_vec)
+mode(num_vec)
+typeof(num_vec)
+length(num_vec)
+
+# Boolean are just TRUE or FALSE - even though you can have NA which is the absense of value
+bool_vec <- c(FALSE,TRUE,TRUE,NA)
+bool_vec
+class(bool_vec)
+mode(bool_vec)
+length(bool_vec)
+
+# It is possible to create vectors using functions like seq or rep
+num_vec_seq <- seq(1:50)
+num_vec_rep <- rep(seq(1:5),10)
+set.seed(42)
+num_vec_ran <- round(runif(50,0,100),0)
+
+# Characters vectors are very common as well
+char_vec <- c("douglas","dublin","1234")
+class(char_vec)
+```
+
+## Non-atomic vectors
+* Lists
+```{r non-atomic vectors}
+my_list <- list("Douglas",123,FALSE,42L)
+class(my_list)
+length(my_list)
+```
+
+# Matrices
+You can create a matrix using the function matrix
+```{r}
+my_matrix <- matrix(data=seq(1:9),
+       nrow = 3,
+       byrow = TRUE)
+
+my_matrix
+
+diag(my_matrix)
+
+```
+
+
+# Conditions & boolean application
+```{r conditions}
+# Let's create a vector called marks, which are the student's marks for some test, the marks go from 0 to 100.
+marks <- num_vec_ran
+
+# Checking the minimum score
+min(marks)
+
+# Checking the maximum score
+max(marks)
+
+# Checking the average score
+mean(marks)
+
+# Checking the median score
+median(marks)
+
+# Checking altogether :)
+summary(marks)
+
+
+# How many students got a score over 70?
+over70 <- marks >= 70
+class(over70)
+
+# R returns another array, but this time is a boolean array. IT has the same length as marks array.
+length(over70)
+length(marks)
+
+# It means that for each value on the vector, R returns a TRUE or FALSE argument when the condition was satisfied.
+over70
+
+# Booleans are bascically 0 or 1. Where 0 is FALSE and 1 is TRUE. R is smart anough to understand that, so we can run aritimethic operations like sum or mean.
+
+# How many students passed the test with honours?
+sum(over70)
+
+# What's the percentage of pass with honours?
+mean(over70)
+```
+
+
+# Reading an external dataset into a dataframe
+```{r reading an external dataset}
+library(foreign)
+human_rights <- read.dta(file = "hmnrghts.dta")
+
+class(df)
+mode(df)
+```
+
+Let's check some data on that dataframe
+```{r checking the data}
+head(human_rights, 10)
+str(df)
+summary(df)
+```
+
+# Subsetting a dataframe
+```{r subsetting}
+subset(df, democ > 8)
+df[df$democ > 8 & !is.na(df$democ),]
+```
+
+# Creating new variables
+```{r creating new variables}
+df$war <- df$civ_war + df$int_war
+head(df)
+
+df$dummy_war <- as.numeric(df$war>0)
+head(df)
+```
+
+# Dealling with factors
+```{r factors}
+
+df$gnpcats <- factor(df$gnpcats)
+head(df)
+levels(df$gnpcats)
+
+df$gnpcats <- factor(df$gnpcats, levels = c("NA","<1000","1000-1999","2000-2999","3000-3999",">4000"))
+levels(df$gnpcats)
+summary(df$gnpcats)
+```
+
+# Plotting some basic data using ggplot
+```{r plotting}
+library(ggplot2)
+
+ggplot(df, aes(x=gnpcats)) + 
+  geom_bar()
+```
+
+```{r adding layers to the plot} 
+ggplot(df, aes(x=gnpcats)) + 
+  geom_bar(aes(fill=factor(dummy_war)))
+```
+

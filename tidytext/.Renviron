@@ -1,0 +1,2 @@
+#.Renviron
+GL_AUTH=keys/credential.json

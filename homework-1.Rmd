@@ -1,0 +1,84 @@
+---
+title: "homework-1"
+author: "Douglas Zickuhr"
+date: "16/10/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r lib load}
+library(foreign)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Open the data and make sure that the command for doing so is in the command file.
+```{r reading dataset}
+df <- read.dta("/Users/dzickuhr/Downloads/DomPolHIrep.dta")
+```
+
+# 2. Select only those cases where the value for the votebill variable is equal to “106S98"
+```{r filtering}
+df_106S98 <- df[df$votebill == "106S98",]
+head(df_106S98)
+```
+
+# 3. First, we will investigate the relationship between party membership and being a veteran.
+
+## a. Produce a pie chart of the Veteran variable and interpret in one or two sentences. This variable is coded as 1 for veterans and 0 otherwise.
+```{r}
+pie(table(df$Veteran),
+    labels = c("Others","Veterans"))
+```
+
+## b. Produce a cross table of whether Democrats are more or less likely than Republicans to be veterans. Party preference is encoded in the party variable, where 100 represents Democrats and 200 Republicans.
+```{r}
+prop.table(table(df_106S98$party,df_106S98$Veteran,
+                 dnn = c("Party","Veterans?")))
+```
+
+
+# 4. Next we will look at the relationship between gender and ideology, where we make use of the so-called NOMINATE scores (Poole and Rosenthal, 1997; Hildebrandt, Hillebrecht and Holm, 2013, 256–257), which are captured in the ideology variable in the data set. As is stated in Hildebrandt, Hillebrecht and Holm (2013, fn. 9): “As a point of reference, George W. Bush’s NOMINATE score is 0.9; Barack Obama’s is -0.4.”
+
+## a. Produce a boxplot of the ideology variable and interpret the distribution of the variable.
+```{r}
+boxplot(df_106S98$ideology)
+```
+
+## b. Produce a histogram of the ideology variable and interpret the distribution.
+```{r}
+hist(df_106S98$ideology)
+```
+
+## c. Calculate the mean, median, variance and standard deviation of the ideology variable.
+```{r}
+mean(df_106S98$ideology)
+```
+
+```{r}
+median(df_106S98$ideology)
+```
+
+```{r}
+var(df_106S98$ideology)
+```
+
+```{r}
+sd(df_106S98$ideology)
+```
+
+
+## e. Produce a graph with two boxplots, side-by-side, to investigate the relation- ship between Gender and ideology. What do you conclude?
+```{r}
+boxplot(ideology~Gender,
+        data = df_106S98,
+        xlab = "Gender",
+        ylab = "NOMINATE score")
+```
+
+
+
