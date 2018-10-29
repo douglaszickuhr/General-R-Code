@@ -9,6 +9,7 @@ editor_options:
 
 ```{r lib load}
 library(foreign)
+library(tidyverse)
 ```
 
 
