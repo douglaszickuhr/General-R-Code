@@ -1,0 +1,61 @@
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(broom)
+library(tidyr)
+library(purrr)
+library(stringr)
+
+shows <- read_csv("C:/Users/ST9DZ1/Downloads/IMDb_Economist_tv_ratings.csv")
+
+linear_model <- function(df,formula){
+  lm(formula,df)
+}
+
+shows_more_than_one_season <- shows %>%
+  filter(seasonNumber > 1) %>% 
+  distinct(title)
+
+shows_summary <- shows %>%
+  group_by(title) %>%
+  mutate(genre = str_extract(genres,"^\\w+")) %>%
+  summarise(seasons = n(),
+            avg_share = mean(share),
+            avg_rating = mean(av_rating),
+            genre = max(genre))
+
+shows_lm <- shows %>% 
+  semi_join(shows_more_than_one_season) %>%
+  group_by(title) %>% 
+  nest() %>%
+  mutate(model_rating = map(data,linear_model,av_rating~seasonNumber),
+         model_rating_details = map(model_rating,tidy),
+         model_share = map(data,linear_model,share~seasonNumber),
+         model_share_details = map(model_share,tidy)
+         ) %>% 
+  unnest(model_rating_details,model_share_details) %>% 
+  filter(term == "seasonNumber") %>% 
+  rename(rating = estimate,
+         share = estimate1)
+
+shows_more_than_one_season %>% 
+  left_join(shows_summary) %>% 
+  left_join(shows_lm) %>% 
+  filter(rating > 0,
+         share > 0) %>% {
+    ggplot(.) + 
+      geom_point(aes(rating,share,
+                     size = seasons,
+                     colour = genre),
+                 alpha = 0.5) +
+      geom_label_repel(aes(rating,share,label = title)) +
+      # xlim(7,9.5) +
+      # theme_light()
+    
+  }
+  
+
+shows %>%
+  filter(title == "Breaking Bad") %>% View()
+  
+  
