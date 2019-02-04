@@ -1,0 +1,40 @@
+---
+title: "week32"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+library(tidyverse)
+```
+
+```{r}
+df <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-11-06/us_wind.csv")
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+df %>%
+  mutate(t_manu2 = fct_lump(t_manu, 10)) %>%
+  filter(!t_state %in% c("AK","HI", "GU", "PR")) %>%
+  ggplot(aes(xlong,ylat,colour = t_manu2)) + 
+  borders("state") + 
+  geom_point(alpha = 0.5) + 
+  coord_map() + 
+  theme_void()
+```
+
+
+```{r}
+df %>% 
+  mutate(t_manu2 = fct_lump(t_manu, 10)) %>%
+  count(t_manu2)
+```
+

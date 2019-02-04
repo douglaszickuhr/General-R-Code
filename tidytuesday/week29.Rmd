@@ -15,29 +15,32 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(scales)
 library(reshape2)
+library(janitor)
 theme_set(theme_light())
 ```
 
 ```{r}
-major_salary <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-16/recent-grads.csv")
+major_salary <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-10-16/recent-grads.csv") %>%
+  mutate(Major = str_to_title(Major)) %>%
+  clean_names()
+  
 ```
 
 # Removing majors where the # of sample is less than 100
 ```{r}
 major_salary_sampled <- major_salary %>%
-  filter(Sample_size >= 100)  
+  filter(sample_size >= 100)  
 ```
 
 
 # What are the major with the highest unemployement rate?
 ```{r}
 major_salary_sampled %>%
-  arrange(desc(Unemployment_rate)) %>%
-  mutate(Major = str_to_title(Major),
-         Major = fct_reorder(Major,Unemployment_rate)) %>%
+  arrange(desc(unemployment_rate)) %>%
+  mutate(major = fct_reorder(major,unemployment_rate)) %>%
   head(20) %>%
   ggplot() + 
-  geom_col(aes(x=Major,y=Unemployment_rate),fill="black") + 
+  geom_col(aes(x=major,y=unemployment_rate),fill="black") + 
   scale_y_continuous(labels = scales::percent) +
   coord_flip() + 
   labs(title = "What are majors with the highest unmployment rate?",
@@ -49,18 +52,18 @@ major_salary_sampled %>%
 # What's the participation of women by Major Category?
 ```{r}
 major_salary %>%
-  group_by(Major_category) %>%
-  summarise(Men = sum(Men,na.rm = TRUE),
-            Women = sum(Women,na.rm = TRUE),
-            GrandTotal = Men + Women,
-            Men = Men/GrandTotal,
-            Women = Women/GrandTotal) %>%
-  select(-GrandTotal) %>%
-  mutate(Major_category = fct_reorder(Major_category,Women)) %>%
-  melt(id.vars = c("Major_category"),
-       variable.name = "Genre",
-       value.name = "Rate") %>%
-  ggplot(aes(x=Major_category,y=Rate,group=Genre,fill=Genre)) +
+  group_by(major_category) %>%
+  summarise(men = sum(men,na.rm = TRUE),
+            women = sum(women,na.rm = TRUE),
+            grand_total = men + women,
+            men = men/grand_total,
+            women = women/grand_total) %>%
+  select(-grand_total) %>%
+  mutate(major_category = fct_reorder(major_category,women)) %>%
+  melt(id.vars = c("major_category"),
+       variable.name = "genre",
+       value.name = "rate") %>%
+  ggplot(aes(x=major_category,y=rate,group=genre,fill=genre)) +
   geom_bar(stat = "identity",
            position = "stack") + 
   coord_flip() + 
@@ -74,6 +77,15 @@ major_salary %>%
 
 
 ```{r}
-
+major_salary %>%
+  group_by(major_category) %>%
+  summarise(median = median(median),
+            p25th = median(p25th),
+            p75th = median(p75th)) %>% 
+  mutate(major_category = fct_reorder(major_category,median)) %>%
+  ggplot() + 
+  geom_point(aes(x=major_category,y=median)) + 
+  geom_errorbar(aes(x=major_category,ymax=p75th,ymin=p25th)) + 
+  coord_flip()
 ```
 
