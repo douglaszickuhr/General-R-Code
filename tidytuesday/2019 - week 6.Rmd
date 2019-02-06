@@ -1,0 +1,62 @@
+---
+title: "TidyTuesday 2019 6"
+author: "Douglas Zickuhr"
+date: "4/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(readr)
+library(dplyr)
+library(datasets)
+library(sf)
+library(ggplot2)
+library(fiftystater)
+library(stringr)
+theme_set(theme_void())
+data("fifty_states")
+```
+
+
+```{r}
+hpi <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-02-05/state_hpi.csv")
+```
+
+```{r}
+usa <- st_read("/Users/douglaszickuhr/Downloads/cb_2017_us_state_20m/cb_2017_us_state_20m.shp")
+```
+
+```{r}
+# convert fifty_states to an sf data frame
+(sf_fifty <- st_as_sf(fifty_states, coords = c("long", "lat")) %>% 
+   # convert sets of points to polygons
+   group_by(id, piece) %>% 
+   summarize(do_union = FALSE) %>%
+   st_cast("POLYGON") %>%
+   # convert polygons to multipolygons for states with discontinuous regions
+   group_by(id) %>%
+   summarize())
+```
+
+
+```{r}
+states <- as_tibble(cbind(abb = datasets::state.abb,name = datasets::state.name))
+
+sf_fifty %>% 
+  mutate(id = str_to_title(id)) %>% 
+  left_join(states, by = c("id" = "name")) %>% 
+  mutate(abb = if_else(id == "District Of Columbia", "DC", abb)) %>% 
+  left_join(hpi, by = c("abb" = "state")) %>% 
+  filter(year == 1975,
+         month == 1) %>% 
+  ggplot() + 
+  geom_sf(aes(fill = price_index)) + 
+  labs(fill = "Price Index")
+
+```
+
