@@ -13,14 +13,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(readr)
 library(dplyr)
-library(datasets)
 library(sf)
 library(ggplot2)
-library(fiftystater)
 library(stringr)
 library(gganimate)
 theme_set(theme_void())
-data("fifty_states")
 ```
 
 
@@ -33,21 +30,6 @@ usa <- st_read("/Users/douglaszickuhr/Downloads/cb_2017_us_state_20m/cb_2017_us_
 ```
 
 ```{r}
-# convert fifty_states to an sf data frame
-(sf_fifty <- st_as_sf(fifty_states, coords = c("long", "lat")) %>% 
-   # convert sets of points to polygons
-   group_by(id, piece) %>% 
-   summarize(do_union = FALSE) %>%
-   st_cast("POLYGON") %>%
-   # convert polygons to multipolygons for states with discontinuous regions
-   group_by(id) %>%
-   summarize())
-```
-
-
-```{r}
-states <- as_tibble(cbind(abb = datasets::state.abb,name = datasets::state.name))
-
 p <- usa %>% 
   left_join(hpi, by = c("STUSPS" = "state")) %>%
   filter(!STUSPS %in% c("AK","HI")) %>%
