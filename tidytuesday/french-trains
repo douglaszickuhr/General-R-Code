@@ -26,7 +26,7 @@ small_trains <- readr::read_csv("C:/Users/ST9DZ1/Documents/small_trains.csv")
 
 ```{r}
 small_trains %>% 
-  filter(year == 2017) %>%
+  #filter(year == 2018) %>%
   group_by(service,year,month,departure_station,arrival_station) %>% 
   summarise_at(vars(journey_time_avg,total_num_trips,avg_delay_all_arriving,avg_delay_all_departing),mean) %>% 
   mutate(avg_delay = avg_delay_all_arriving + avg_delay_all_departing) %>%
@@ -44,11 +44,12 @@ small_trains %>%
                                rel_min_height = 0) +
   scale_fill_viridis_c(direction = -1,
                        option = "plasma") + 
-  labs(title = "Average Delay on French trains in 2017",
+  labs(title = "Average Delay on French trains",
        x = "Average Delay (min)",
        y = NULL,
        fill = "Average Delay (min)") + 
-  theme_ridges()
+  theme_ridges() + 
+  facet_wrap(~year)
     
 ```
 
