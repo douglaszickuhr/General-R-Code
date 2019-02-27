@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(readr)
 library(dplyr)
-library(datasets)
 library(sf)
 library(ggplot2)
 library(stringr)
@@ -31,6 +30,7 @@ usa <- st_read("/Users/douglaszickuhr/Downloads/cb_2017_us_state_20m/cb_2017_us_
 ```
 
 ```{r}
+<<<<<<< HEAD
 states <- as_tibble(cbind(abb = datasets::state.abb,name = datasets::state.name))
 
 usa %>% 
@@ -43,6 +43,8 @@ usa %>%
   
   
 
+=======
+>>>>>>> 51c943c91a880139cfd8384a2aeb08f45192ef12
 p <- usa %>% 
   left_join(hpi, by = c("STUSPS" = "state")) %>%
   filter(!STUSPS %in% c("AK","HI")) %>%
