@@ -1,0 +1,54 @@
+---
+title: "Untitled"
+author: "Douglas Zickuhr"
+date: "27 February 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(forcats)
+library(ggridges)
+```
+
+
+```{r}
+small_trains <- readr::read_csv("https://github.com/rfordatascience/tidytuesday/raw/master/data/2019/2019-02-26/small_trains.csv") 
+```
+
+
+```{r}
+small_trains %>% 
+  group_by(service,year,month,departure_station,arrival_station) %>% 
+  summarise_at(vars(journey_time_avg,total_num_trips,avg_delay_all_arriving,avg_delay_all_departing),mean) %>% 
+  mutate(avg_delay = avg_delay_all_arriving + avg_delay_all_departing) %>%
+  filter(avg_delay > -5,
+         avg_delay <= 20) %>%
+  ungroup() %>%
+  mutate(month = lubridate::month(month,
+                                  label = TRUE),
+         month = forcats::fct_rev(month)) %>%
+  ggplot() +
+  geom_density_ridges_gradient(aes(x = avg_delay,
+                                   y = month,
+                                   fill = ..x..),
+                               scale = 2,
+                               rel_min_height = 0) +
+  scale_fill_viridis_c(direction = -1,
+                       option = "plasma") + 
+  labs(title = "Average Delay on French trains",
+       x = "Average Delay (min)",
+       y = NULL,
+       fill = "Average Delay (min)") + 
+  theme_ridges() + 
+  facet_wrap(~year)
+    
+```
+
