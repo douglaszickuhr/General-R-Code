@@ -41,6 +41,7 @@ ggplot() +
               method = "lm",
               se = FALSE,
               colour = "black",
+              linetype = 2,
               show.legend = FALSE) +
   geom_text_repel(data = labels,
                   aes(x = workers_male/total_workers,
@@ -52,7 +53,6 @@ ggplot() +
                      breaks = seq(25000, 150000, by = 25000),
                      labels = scales::dollar_format()) + 
   scale_size_continuous(guide = FALSE) +
-  scale_color_viridis_d(option = "B") +
   labs(title = "Does Computer, Engineering and Science pays more for majority male roles?",
        subtitle = "Annual median salary vs Male workforce rate in 2016",
        caption = "Source: The US Census Bureau/Bureau of Labor",
